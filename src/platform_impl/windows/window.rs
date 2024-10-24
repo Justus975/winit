@@ -25,9 +25,9 @@ use windows_sys::Win32::System::Com::{
 };
 use windows_sys::Win32::System::Ole::{OleInitialize, RegisterDragDrop};
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
-    EnableWindow, GetActiveWindow, MapVirtualKeyW, ReleaseCapture, SendInput, ToUnicode, INPUT,
-    INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC,
-    VIRTUAL_KEY, VK_LMENU, VK_MENU, VK_SPACE,
+    EnableWindow, GetActiveWindow, MapVirtualKeyW, ReleaseCapture, SendInput, SetFocus, ToUnicode,
+    INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP,
+    MAPVK_VK_TO_VSC, VIRTUAL_KEY, VK_LMENU, VK_MENU, VK_SPACE,
 };
 use windows_sys::Win32::UI::Input::Touch::{RegisterTouchWindow, TWF_WANTPALM};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
@@ -77,6 +77,7 @@ use crate::window::{
 pub(crate) struct Window {
     /// Main handle for the window.
     window: HWND,
+    parent: Option<HWND>,
 
     /// The current window state.
     window_state: Arc<Mutex<WindowState>>,
@@ -1107,6 +1108,20 @@ impl Window {
             );
         }
     }
+
+    pub fn focus_for_keyboard_input(&self) {
+        unsafe {
+            SetFocus(self.window);
+        }
+    }
+    pub fn focus_parent_window_for_keyboard_input(&self) {
+        let Some(parent) = self.parent else {
+            return;
+        };
+        unsafe {
+            SetFocus(parent);
+        }
+    }
 }
 
 impl Drop for Window {
@@ -1165,7 +1180,15 @@ impl<'a> InitData<'a> {
 
         unsafe { ImeContext::set_ime_allowed(window, false) };
 
-        Window { window, window_state, thread_executor: self.event_loop.create_thread_executor() }
+        Window {
+            window,
+            window_state,
+            thread_executor: self.event_loop.create_thread_executor(),
+            parent: self.attributes.parent_window.as_ref().map(|w| match w.0 {
+                rwh_06::RawWindowHandle::Win32(h) => h.hwnd.get(),
+                _ => panic!(),
+            }),
+        }
     }
 
     unsafe fn create_window_data(&self, win: &Window) -> event_loop::WindowData {

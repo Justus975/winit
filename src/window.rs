@@ -1316,6 +1316,17 @@ impl Window {
         self.window.maybe_queue_on_main(|w| w.focus_window())
     }
 
+    #[inline]
+    pub fn focus_window_for_keyboard_input(&self) {
+        self.window.maybe_queue_on_main(|w| w.focus_for_keyboard_input())
+    }
+
+    #[inline]
+    pub fn focus_parent_window_for_keyboard_input(&self) {
+        self.window.maybe_queue_on_main(|w| w.focus_parent_window_for_keyboard_input())
+    }
+    //self.window
+
     /// Gets whether the window has keyboard focus.
     ///
     /// This queries the same state information as [`WindowEvent::Focused`].

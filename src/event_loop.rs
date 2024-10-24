@@ -115,9 +115,9 @@ impl<T> EventLoopBuilder<T> {
     pub fn build(&mut self) -> Result<EventLoop<T>, EventLoopError> {
         let _span = tracing::debug_span!("winit::EventLoopBuilder::build").entered();
 
-        if EVENT_LOOP_CREATED.swap(true, Ordering::Relaxed) {
-            return Err(EventLoopError::RecreationAttempt);
-        }
+        // if EVENT_LOOP_CREATED.swap(true, Ordering::Relaxed) {
+        //     return Err(EventLoopError::RecreationAttempt);
+        // }
 
         // Certain platforms accept a mutable reference in their API.
         #[allow(clippy::unnecessary_mut_passed)]
